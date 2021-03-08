@@ -7,22 +7,45 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(tidyr)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(ggthemes)
+```
+```{r}
+vtr_sc_2005 <- read_csv("2005.csv") %>% mutate(year = 2005)
+vtr_sc_2006 <- read_csv("2005.csv") %>% mutate(year = 2006)
+vtr_sc_2007 <- read_csv("2007.csv") %>% mutate(year = 2007)
+vtr_sc_2008 <- read_csv("2008.csv") %>% mutate(year = 2008)
+vtr_sc_2009 <- read_csv("2009.csv") %>% mutate(year = 2009)
+vtr_sc_2010 <- read_csv("2010.csv") %>% mutate(year = 2010)
+vtr_sc_2011 <- read_csv("2011.csv") %>% mutate(year = 2011)
+```
+ 
+```{r}
+general_vtr <- rbind(vtr_sc_2005, vtr_sc_2006, vtr_sc_2007, vtr_sc_2008, vtr_sc_2009, vtr_sc_2010, vtr_sc_2011) %>% 
+  pivot_longer(cols = c(vet_males, vet_females), names_to = "sex", values_to = "num_vet") %>% 
+  mutate(sex = ifelse(sex == "vet_males", "M", "F"))
+general_vtr
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+general_vtr %>% 
+  ggplot(aes(x = sex, y = num_vet))+
+  labs(x = "Sex", y = "Number of Veteran Suicides", title = "Gender")+
+  theme_igray()+
+    geom_col()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
