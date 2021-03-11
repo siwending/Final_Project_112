@@ -14,36 +14,108 @@ library(readr)
 library(dplyr)
 library(ggthemes)
 ```
-```{r}
-vtr_sc_2005 <- read_csv("2005.csv") %>% mutate(year = 2005)
-vtr_sc_2006 <- read_csv("2005.csv") %>% mutate(year = 2006)
-vtr_sc_2007 <- read_csv("2007.csv") %>% mutate(year = 2007)
-vtr_sc_2008 <- read_csv("2008.csv") %>% mutate(year = 2008)
-vtr_sc_2009 <- read_csv("2009.csv") %>% mutate(year = 2009)
-vtr_sc_2010 <- read_csv("2010.csv") %>% mutate(year = 2010)
-vtr_sc_2011 <- read_csv("2011.csv") %>% mutate(year = 2011)
-```
+ 
+ 
+## Read Data 
  
 ```{r}
-general_vtr <- rbind(vtr_sc_2005, vtr_sc_2006, vtr_sc_2007, vtr_sc_2008, vtr_sc_2009, vtr_sc_2010, vtr_sc_2011) %>% 
-  pivot_longer(cols = c(vet_males, vet_females), names_to = "sex", values_to = "num_vet") %>% 
-  mutate(sex = ifelse(sex == "vet_males", "M", "F"))
-general_vtr
+# read data
+vet_deaths_sex_age_2005_2018 <- read_csv("data/vet_deaths_sex_age_2005_2018.csv")
+nonvet_deaths_sex_age_2005_2018 <- read_csv("data/nonvet_deaths_sex_age_2005_2018.csv")
+
+
+pop_deaths_state_age_2005_2018 <- read_csv("data/pop_deaths_state_age_2005_2018.csv")
+pop_deaths_state_method_2005_2018 <- read_csv("data/pop_deaths_state_method_2005_2018.csv")
+```
+
+
+## Data Cleaning
+
+
+```{r}
+# data cleaning: veteran suicides by age, sex  (as compare to non-veteran)
+# usage: for general veteran suicides plots
+nonvet_total <- nonvet_deaths_sex_age_2005_2018 %>% 
+  select(-nonvet_rate, -nonvet_deaths, -nonvet_pop, -male_nonvet_rate, -female_nonvet_rate) %>% 
+  mutate(age = ifelse(age_2 == "." | age_2=="55", "55+", age_2)) %>% 
+  mutate(female_nonvet_deaths = as.numeric(gsub(",","",ifelse(female_nonvet_deaths==".", "0",female_nonvet_deaths)))) %>% 
+  mutate(female_nonvet_pop = as.numeric(gsub(",","",ifelse(female_nonvet_pop==".", "0",female_nonvet_pop)))) %>% 
+  select(-c(age_1, age_2)) %>% 
+  group_by(Year, age) %>% 
+  summarise_all(.funs = sum) %>% 
+  #mutate(nonvet_rate = nonvet_deaths*100000/nonvet_pop) %>% 
+  mutate(male_nonvet_rate = male_nonvet_deaths*100000/male_nonvet_pop) %>% 
+  mutate(female_nonvet_rate = female_nonvet_deaths*100000/female_nonvet_pop) %>% 
+  filter(age!="Total")
+
+vet_total <- vet_deaths_sex_age_2005_2018 %>% 
+  select(-vet_rate,-vet_deaths, -vet_pop, -male_vet_rate, -female_vet_rate) %>% 
+  mutate(age = ifelse(age_2 == "." | age_2=="55", "55+", age_2)) %>% 
+  mutate(female_vet_deaths = as.numeric(gsub(",","",ifelse(female_vet_deaths==".", "0",female_vet_deaths)))) %>% 
+  mutate(female_vet_pop = as.numeric(gsub(",","",ifelse(female_vet_pop==".", "0",female_vet_pop)))) %>% 
+  select(-c(age_1, age_2)) %>% 
+  group_by(Year, age) %>% 
+  summarise_all(.funs = sum) %>% 
+  #mutate(vet_rate = vet_deaths*100000/vet_pop) %>% 
+  mutate(male_vet_rate = male_vet_deaths*100000/male_vet_pop) %>% 
+  mutate(female_vet_rate = female_vet_deaths*100000/female_vet_pop) %>% 
+  filter(age!="Total")
+
+
+pop_deaths_sex_age_2005_2018 <- nonvet_total %>% 
+  left_join(vet_total) %>% 
+  pivot_longer(
+    cols = -c(Year,age),
+    names_to = c("sex", "group", "benchmark"),
+    names_pattern = "(.*)_(.*)_(.*)",
+    values_to = "value"
+  ) %>% 
+  pivot_wider(
+    id_cols = c(Year, age, sex, group),
+    names_from = benchmark,
+    values_from = value
+  )
+
+pop_deaths_sex_age_2005_2018
+```
+
+
+```{r}
+# data cleaning: veteran suicide by state (region)!!
+# usage: for drawing maps
+pop_deaths_state_age <- pop_deaths_state_age_2005_2018 %>% 
+  filter(age=="Total" & state!="All" & state!= "Total U.S.") %>% 
+  select(-age) %>% 
+  mutate(vet_deaths=as.numeric(vet_deaths)) %>% 
+  mutate(vet_rate=as.numeric(vet_rate)) %>% 
+  mutate(pop_deaths=as.numeric(pop_deaths)) %>% 
+  mutate(pop_rate=as.numeric(pop_rate))
+
+pop_deaths_state_age
 ```
 
 ```{r}
-general_vtr %>% 
-  ggplot(aes(x = sex, y = num_vet))+
-  labs(x = "Sex", y = "Number of Veteran Suicides", title = "Gender")+
-  theme_igray()+
-    geom_col()
+# data cleaning: veteran suicides by methods (as compare to general population)
+# usage: for general veteran suicides plots
+pop_deaths_state_method <- pop_deaths_state_method_2005_2018 %>% 
+  filter(state!="All" & state!= "Total U.S.") %>% 
+  mutate(group=ifelse(group=="Veteran Method", "Veteran", "Population")) %>% 
+  mutate(deaths=as.numeric(deaths)) 
+
+pop_deaths_state_method
 ```
 
- 
- 
- 
- 
- 
+
+## Plots
+
+```{r}
+# figure 1
+pop_deaths_state_method %>% 
+  ggplot(aes(x=group,y=deaths, fill=method))+
+    geom_col(position = "fill")
+```
+
+
  
  
  
