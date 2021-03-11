@@ -115,6 +115,7 @@ pop_deaths_state_method %>%
     geom_col(position = "fill")
 ```
 
+daniel
 
  
  
