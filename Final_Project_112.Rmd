@@ -1,6 +1,12 @@
 ---
-title: "Final_Project_112"
-output: html_document
+title: "Into Veteran Suicide in the U.S. "
+author: "Daniel Fang, Bella Ding"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+    toc: true
+
+
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +19,20 @@ library(ggplot2)
 library(readr)
 library(dplyr)
 library(ggthemes)
+library(tidyverse)     # for data cleaning and plotting
+library(lubridate)     # for date manipulation
+library(openintro)     # for the abbr2state() function
+library(palmerpenguins)# for Palmer penguin data
+library(maps)          # for map data
+library(ggmap)         # for mapping points on maps
+library(gplots)        # for col2hex() function
+library(RColorBrewer)  # for color palettes
+library(sf)            # for working with spatial data
+library(leaflet)       # for highly customizable mapping
+library(gganimate)     # for adding animation layers to ggplots
+library(transformr)    # for "tweening" (gganimate)
+library(gifski)        # need the library for creating gifs but don't need to load each time
+library(shiny)         # for creating interactive apps
 ```
  
  
@@ -112,10 +132,36 @@ pop_deaths_state_method
 # figure 1
 pop_deaths_state_method %>% 
   ggplot(aes(x=group,y=deaths, fill=method))+
-    geom_col(position = "fill")
+    geom_col(position = "fill")+
+    labs(title = "Suicide Methods Comparison: Veteran vs. General Population", y = "")
 ```
 
-daniel
+```{r}
+# figure 2
+pop_deaths_sex_age_2005_2018 %>%
+  ggplot(aes(y = sex, x = deaths))+
+  theme_igray()+
+    geom_col() +
+  labs(title = "Number of Veteran Suicides by Gender", y = "Sex", x = "# of suicides")
+```
+
+```{r}
+states_map <- map_data("state")
+pop_deaths_state_age %>%
+  filter(Year == "2018") %>%
+  mutate(state = str_to_lower(state)) %>%
+  ggplot(aes()) +
+  geom_map(aes(map_id = state, 
+               fill = vet_rate), 
+           map = states_map)+
+  expand_limits(x = states_map$long, y = states_map$lat)+
+  scale_fill_gradient2()+
+  theme_map()+
+  theme(legend.background =  element_blank())+
+  labs(title = "Percentage of Veteran Suicides in Total Veteran Population in the U.S.", fill = "%")
+
+```
+
 
  
  
