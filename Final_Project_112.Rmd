@@ -1,6 +1,12 @@
 ---
-title: "Final_Project_112"
-output: html_document
+title: "Into Veteran Suicide in the U.S. "
+author: "Bella Ding, Daniel Fang"
+output: 
+  prettydoc::html_pretty:
+    theme: Cayman
+    toc: true
+
+
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +19,24 @@ library(ggplot2)
 library(readr)
 library(dplyr)
 library(ggthemes)
+library(tidyverse)     # for data cleaning and plotting
+library(lubridate)     # for date manipulation
+library(openintro)     # for the abbr2state() function
+library(palmerpenguins)# for Palmer penguin data
+library(maps)          # for map data
+library(ggmap)         # for mapping points on maps
+library(gplots)        # for col2hex() function
+library(RColorBrewer)  # for color palettes
+library(sf)            # for working with spatial data
+library(leaflet)       # for highly customizable mapping
+library(gganimate)     # for adding animation layers to ggplots
+library(transformr)    # for "tweening" (gganimate)
+#library(gifski)        # need the library for creating gifs but don't need to load each time
+library(shiny)         # for creating interactive apps
+library(ggrepel)
+library(forcats)
+library(scales)
+library(statebins)
 ```
  
  
@@ -74,7 +98,8 @@ pop_deaths_sex_age_2005_2018 <- nonvet_total %>%
     id_cols = c(Year, age, sex, group),
     names_from = benchmark,
     values_from = value
-  )
+  ) %>% 
+  mutate(group=ifelse(group=="nonvet", "Non-Veteran", "Veteran"))
 
 pop_deaths_sex_age_2005_2018
 ```
@@ -87,9 +112,13 @@ pop_deaths_state_age <- pop_deaths_state_age_2005_2018 %>%
   filter(age=="Total" & state!="All" & state!= "Total U.S.") %>% 
   select(-age) %>% 
   mutate(vet_deaths=as.numeric(vet_deaths)) %>% 
+  mutate(vet_rate=ifelse(grepl("*", vet_rate, fixed = TRUE), substr(vet_rate, 1, nchar(vet_rate)-1), vet_rate)) %>% 
   mutate(vet_rate=as.numeric(vet_rate)) %>% 
   mutate(pop_deaths=as.numeric(pop_deaths)) %>% 
-  mutate(pop_rate=as.numeric(pop_rate))
+  mutate(pop_rate=as.numeric(pop_rate)) %>% 
+  filter(!is.na(vet_rate)) %>% 
+  mutate(Year=as.integer(Year))
+  #mutate(state=tolower(state))
 
 pop_deaths_state_age
 ```
@@ -109,15 +138,109 @@ pop_deaths_state_method
 ## Plots
 
 ```{r}
-# figure 1
+# figure 1: 
+pop_deaths_sex_age_2005_2018 %>% 
+  ggplot(aes(x=age, y=deaths, fill=group))+
+    geom_col(position = "dodge")+
+    facet_wrap(~sex)+
+    labs(title = "Number of Suicides by Age Group, Sex and Veteran Status", x = "Age Group", y = "# of suicides",fill="Veteran Status")
+```
+
+```{r eval=FALSE}
+# Figure 2:
+vet_rate_time_sex <- pop_deaths_sex_age_2005_2018 %>% 
+  group_by(Year, sex, group) %>% 
+  summarise(deaths=sum(deaths), pop=sum(pop)) %>% 
+  mutate(rate=deaths*100000/pop) %>% 
+  ggplot(aes(x=Year, y= rate, color=group))+
+    geom_line()+
+    facet_wrap(~sex)+
+    labs(title = "Number of Suicides per 100,000 Population by Sex and Veteran Status", y="# of suicides per 100,000 population", color="Veteran Status", subtitle = "Year: {frame_along}")+
+    transition_reveal(Year)
+
+animate(vet_rate_time_sex, nframes = 14, duration = 7)
+```
+
+```{r eval=FALSE, echo=FALSE}
+anim_save("vet_rate_time_sex.gif")
+```
+
+```{r, echo=FALSE}
+knitr::include_graphics("vet_rate_time_sex.gif")
+```
+
+```{r}
+# figure 3:
 pop_deaths_state_method %>% 
-  ggplot(aes(x=group,y=deaths, fill=method))+
-    geom_col(position = "fill")
+  mutate(deaths=ifelse(is.na(deaths), 0, deaths)) %>% 
+  group_by(group, method) %>% 
+  summarise(deaths=sum(deaths)) %>% 
+  mutate(prop=deaths/sum(deaths)) %>% 
+  mutate(ymax=cumsum(prop)) %>% 
+  mutate(ymin=c(0, head(ymax, n=-1))) %>% 
+  mutate(pos= (ymax+ymin)/2) %>% 
+  mutate(label=percent(prop)) %>% 
+  ggplot(aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=method)) +
+    geom_rect()+
+    coord_polar(theta="y") +
+    geom_text( x=2, aes(y=pos, label=label, color=method), size=3) +
+    xlim(c(-1, 4)) +
+    facet_wrap(~group)+
+    theme_void()+
+    labs(title = "Suicide Methods Comparison: Veteran vs. General Population", y = "", x="")
 ```
 
 
- 
- 
- 
- 
+
+```{r}
+# figure 2
+#pop_deaths_sex_age_2005_2018 %>%
+#  ggplot(aes(y = sex, x = deaths, fill=group))+
+#  theme_igray()+
+#    geom_col(position = "dodge") +
+#  labs(title = "Number of Veteran Suicides by Gender", y = "Sex", x = "# of suicides")
+```
+
+```{r}
+# Figure 4:
+states_map <- map_data("state")
+pop_deaths_state_age
+
+pop_deaths_state_age %>%
+  filter(Year == "2018") %>%
+  mutate(state = str_to_lower(state)) %>%
+  ggplot(aes()) +
+  geom_map(aes(map_id = state, 
+               fill = vet_rate), 
+           map = states_map,
+           color="white")+
+  expand_limits(x = states_map$long, y = states_map$lat)+
+  scale_fill_gradient2()+
+  theme_map()+
+  theme(legend.background =  element_blank())+
+  labs(title = "Percentage of Veteran Suicides in Total Veteran Population in the U.S.", fill = "# of suicides per 100,000 population")
+```
+
+```{r eval=FALSE}
+# Figure 5:
+gif <- pop_deaths_state_age %>%
+  ggplot(aes(state=state, fill=vet_rate))+
+  geom_statebins()+
+  theme_void()+
+  scale_fill_distiller(palette = "OrRd",direction = 1)+
+  labs(title = "Veteran Suicides in Total Veteran Population in the U.S.", fill = "# of suicides per 100,000 population", subtitle = "Year: {frame_time}")+
+  theme(legend.position="bottom")+
+  transition_time(Year)
+  #ease_aes("linear")
+
+animate(gif, nframes = 14, duration = 28)
+```
+
+```{r eval=FALSE, echo=FALSE}
+anim_save("time_vet_rate.gif")
+```
+
+```{r, echo=FALSE}
+knitr::include_graphics("time_vet_rate.gif")
+```
  
