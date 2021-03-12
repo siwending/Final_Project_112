@@ -133,7 +133,8 @@ pop_deaths_state_method
 pop_deaths_state_method %>% 
   ggplot(aes(x=group,y=deaths, fill=method))+
     geom_col(position = "fill")+
-    labs(title = "Suicide Methods Comparison: Veteran vs. General Population", y = "")
+    labs(title = "Suicide Methods Comparison: Veteran vs. General Population", y = "")+
+  theme_minimal()
 ```
 
 ```{r}
@@ -142,7 +143,18 @@ pop_deaths_sex_age_2005_2018 %>%
   ggplot(aes(y = sex, x = deaths))+
   theme_igray()+
     geom_col() +
-  labs(title = "Number of Veteran Suicides by Gender", y = "Sex", x = "# of suicides")
+  labs(title = "Number of Veteran Suicides by Gender", y = "Sex", x = "# of suicides")+
+  theme_classic()
+```
+
+
+```{r}
+vet_deaths_sex_age_2005_2018 %>%
+  ggplot(aes(y = vet_deaths, x = age_1))+
+  theme_igray()+
+    geom_col() +
+  labs(title = "Number of Veteran Suicides by Age", y = "Total Cases", x = "Age Intervals")+
+  theme_classic()
 ```
 
 ```{r}
@@ -162,6 +174,15 @@ pop_deaths_state_age %>%
 
 ```
 
+```{r}
+vet_deaths_sex_age_2005_2018 %>%
+  filter(age_1 == "Total") %>%
+  ggplot(aes(x = Year, y = vet_deaths)) +
+  geom_line(color = "blue")+
+  geom_point()+
+  labs(title = "Number of Veteren Suicides from 2005 to 2018", y = "Cases")+
+  theme_minimal()
+```
 
  
  
