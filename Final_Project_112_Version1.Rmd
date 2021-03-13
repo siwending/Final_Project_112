@@ -221,7 +221,7 @@ Just by looking at total number of cases in each category is not enough, though,
 
 State-level veteran suicide results are displayed in the following section.
 
-```{r, eval = FALSE, echo = FALSE}
+```{r, echo=FALSE}
 # Figure 4:
 states_map <- map_data("state")
 
