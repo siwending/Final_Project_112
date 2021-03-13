@@ -191,7 +191,7 @@ Next, we look at some statistics that shows the demographic pattern of suicides.
 Veterans and non-vets exhibit distinctive traits in terms of ages of suicides. Among non-veterans, there is not a significant difference in the number of cases within each age group. Non-veterans commited more suicides after they are 35 compared to when they are 18-34. Fewer female non-vets commit suicides when they are 18-34 compared to other age groups than male, but the gender difference is not obvious. For veterans, however, there is a gender difference in terms of age. There are similar numbers of cases among female veterans for each age group, but in males, the number of suicides increases drastically as age increases. To understand this pattern, we also need to understand the social context behind. Older veterans, for example, may be more exposed to mental as well as physical difficulties than younger generations. They usually served when the domestic anti-war movement was at it peak, and thus might be easier to experience PTSD because of their reflection on either their combat experience or psychological guilt. Physically, older veterans are also more vulnerable to suffering from isolation from the society, because a lack of support to veterans right after they retired impeded their steps toward higher education, stable or reliable income, or even transition towards normal lives. 
 
  
-```{r include=FALSE}
+```{r message=FALSE , echo=FALSE}
 # Figure 3:
 vet_rate_time_sex <- pop_deaths_sex_age_2005_2018 %>% 
   group_by(Year, sex, group) %>% 
@@ -210,7 +210,7 @@ animate(vet_rate_time_sex, nframes = 14, duration = 7)
 anim_save("vet_rate_time_sex.gif")
 ```
 
-```{r, echo=FALSE}
+```{r, eval = FALSE, echo=FALSE}
 knitr::include_graphics("vet_rate_time_sex.gif")
 ```
 
@@ -221,10 +221,9 @@ Just by looking at total number of cases in each category is not enough, though,
 
 State-level veteran suicide results are displayed in the following section.
 
-```{r include = FALSE}
+```{r, eval = FALSE, echo = FALSE}
 # Figure 4:
 states_map <- map_data("state")
-pop_deaths_state_age
 
 pop_deaths_state_age %>%
   filter(Year == "2018") %>%
@@ -243,10 +242,9 @@ pop_deaths_state_age %>%
 
 Intuitively, the number of total veteran suicides in each state must conform with the population level of each state, which means that larger states such as California, Florida and Texas should have more veteran populations, as well as veteran suicides in total. If we are going to look into density of suicides, however, the cumulative statistics is also deceptive in this case. Again, we use fractional results to analyze our geographical trend. From this graph, we can observe that the density of veteran suicides does not follow the pattern of total populations. In fact, states with denser (often more) populations are lower in terms of suicide as a fraction of total population. The state with the most suicide cases is Montana, with over 60 veterans per 100,000 population commiting suicide solely in 2018. Most other Central and Mountain states (Nevada, Oregon, New Mexico, Wyoming) also have high concentrations. States with lower statistics usually concentrate in the Midwest and along the Rust Belt (Minnesota, Illinois, Pennsylvania, etc.).
 
-```{r include=FALSE}
+```{r echo=FALSE}
 # Figure 5:
 states_map <- map_data("state")
-pop_deaths_state_age
 
 pop_deaths_state_age %>%
   filter(Year %in% c("2018", "2005", "2010", "2015")) %>%
@@ -266,7 +264,7 @@ pop_deaths_state_age %>%
 
 This graph exhibits the number of suicides per 100,000 population for continental U.S. across selected years.we could observe that the general density of color in maps becomes darker as time passes, which indicates that the overall suicide rate in the U.S. keeps increasing in the past decade. In 2005, for every 100,000 people, almost all the states had less than 30 people committing suicide. However, in 2018, about all of the states exceeded that number. 
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE, echo=FALSE}
 # Figure 6:
 gif <- pop_deaths_state_age %>%
   ggplot(aes(state=state, fill=vet_rate))+
@@ -293,7 +291,7 @@ We can observe the results over time more specifically and straightforward throu
 
 ## 4.4 Other Relevant Information & Analysis
 
-```{r include = FALSE}
+```{r echo = FALSE, message=FALSE}
 # figure 5:
 pop_deaths_state_method %>% 
   mutate(deaths=ifelse(is.na(deaths), 0, deaths)) %>% 
